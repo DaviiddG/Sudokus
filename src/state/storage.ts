@@ -6,7 +6,6 @@ export type TextSize = 'normal' | 'grande' | 'muy-grande';
 export interface Settings {
   theme: Theme;
   textSize: TextSize;
-  showErrors: boolean;
   highlightSame: boolean;
   showTimer: boolean;
   sound: boolean;
@@ -15,7 +14,6 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'claro',
   textSize: 'grande',
-  showErrors: true,
   highlightSame: true,
   showTimer: true,
   sound: true,
@@ -70,7 +68,11 @@ export const storage = {
     const saved = read<Partial<Settings>>(KEYS.settings);
     // Primera visita: se respeta si el dispositivo está en modo oscuro.
     const prefersDark = typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
-    return { ...DEFAULT_SETTINGS, theme: prefersDark ? 'oscuro' : 'claro', ...(saved ?? {}) };
+    const merged = { ...DEFAULT_SETTINGS, theme: prefersDark ? 'oscuro' : 'claro', ...(saved ?? {}) } as Settings & {
+      showErrors?: boolean;
+    };
+    delete merged.showErrors; // ajuste antiguo: ya no se avisa de los errores
+    return merged;
   },
   saveSettings: (s: Settings) => write(KEYS.settings, s),
   loadGame: (): SavedGame | null => {

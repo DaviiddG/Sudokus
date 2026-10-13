@@ -9,14 +9,11 @@ interface Props {
   onSelect: (cell: number) => void;
 }
 
-function describe(game: GameState, i: number, showErrors: boolean) {
+function describe(game: GameState, i: number) {
   const pos = `Fila ${rowOf(i) + 1}, columna ${colOf(i) + 1}`;
   const v = game.values[i];
   if (game.puzzle[i]) return `${pos}: ${v}, número fijo`;
-  if (v) {
-    const wrong = showErrors && v !== game.solution[i];
-    return `${pos}: ${v}${wrong ? ', incorrecto' : ''}`;
-  }
+  if (v) return `${pos}: ${v}${game.hints.includes(i) ? ', comprobado con pista' : ''}`;
   const notes = [];
   for (let d = 1; d <= 9; d++) if (game.notes[i] & (1 << (d - 1))) notes.push(d);
   return notes.length ? `${pos}: vacía, notas ${notes.join(', ')}` : `${pos}: vacía`;
@@ -45,17 +42,14 @@ export const Board = memo(function Board({ game, settings, onSelect }: Props) {
         const peer =
           sel !== null && !isSel && (rowOf(i) === rowOf(sel) || colOf(i) === colOf(sel) || boxOf(i) === boxOf(sel));
         const same = settings.highlightSame && !isSel && selValue !== 0 && v === selValue;
-        const error = settings.showErrors && v !== 0 && v !== game.solution[i];
         const hint = game.hints.includes(i);
         const animate =
           ev && 'cell' in ev && ev.cell === i
-            ? ev.kind === 'place' && !ev.correct && settings.showErrors
-              ? 'shake'
-              : ev.kind === 'place' || ev.kind === 'hint'
-                ? 'pop'
-                : ev.kind === 'given'
-                  ? 'shake'
-                  : ''
+            ? ev.kind === 'place' || ev.kind === 'hint'
+              ? 'pop'
+              : ev.kind === 'given'
+                ? 'shake'
+                : ''
             : '';
         const k = wave.get(i);
         const cls = [
@@ -65,7 +59,6 @@ export const Board = memo(function Board({ game, settings, onSelect }: Props) {
           peer && 'peer',
           same && 'same',
           isSel && 'selected',
-          error && 'error',
           animate,
           k !== undefined && 'wave',
         ]
@@ -84,7 +77,7 @@ export const Board = memo(function Board({ game, settings, onSelect }: Props) {
                 : undefined
             }
             tabIndex={isSel || (sel === null && i === 0) ? 0 : -1}
-            aria-label={describe(game, i, settings.showErrors)}
+            aria-label={describe(game, i)}
             aria-pressed={isSel}
             onPointerDown={(e) => {
               e.preventDefault();

@@ -29,11 +29,7 @@ function tone(freq: number, start: number, dur: number, gain = 0.12, type: Oscil
 
 export const sounds = {
   tap: () => tone(660, 0, 0.12, 0.06),
-  correct: () => tone(784, 0, 0.18, 0.09),
-  wrong: () => {
-    tone(220, 0, 0.25, 0.08, 'triangle');
-    tone(196, 0.12, 0.3, 0.07, 'triangle');
-  },
+  place: () => tone(784, 0, 0.18, 0.09),
   unit: () => [659, 784, 988].forEach((f, k) => tone(f, k * 0.09, 0.35, 0.08)),
   win: () => [523, 659, 784, 1047, 1319].forEach((f, k) => tone(f, k * 0.12, 0.6, 0.1)),
 };

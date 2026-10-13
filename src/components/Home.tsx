@@ -19,8 +19,8 @@ export function Home({ saved, stats, onContinue, onNew, onTutorial, onSettings }
   const progress = resumable
     ? (() => {
         const empty = resumable.puzzle.filter((v) => !v).length;
-        const ok = resumable.values.filter((v, i) => !resumable.puzzle[i] && v === resumable.solution[i]).length;
-        return empty ? ok / empty : 0;
+        const filled = resumable.values.filter((v, i) => v && !resumable.puzzle[i]).length;
+        return empty ? filled / empty : 0;
       })()
     : 0;
 

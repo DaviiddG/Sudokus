@@ -10,8 +10,9 @@ export interface GameState extends SavedGame {
 }
 
 export type GameEvent =
-  | { id: number; kind: 'place'; cell: number; correct: boolean; completedUnits: number[] }
-  | { id: number; kind: 'hint'; cell: number; digit: number; completedUnits: number[] }
+  | { id: number; kind: 'place'; cell: number; completedUnits: number[] }
+  /** fill: casilla vacía rellenada · fix: número equivocado corregido · confirm: el número del jugador era correcto */
+  | { id: number; kind: 'hint'; cell: number; digit: number; mode: 'fill' | 'fix' | 'confirm'; previous: number; completedUnits: number[] }
   | { id: number; kind: 'erase'; cell: number }
   | { id: number; kind: 'undo' }
   | { id: number; kind: 'nothing-to-undo' }
@@ -67,9 +68,12 @@ export function isSolved(values: Grid, solution: Grid) {
   return true;
 }
 
-/** Unidades (fila/columna/caja) de la casilla que han quedado completas y correctas. */
-function completedUnitsAt(cell: number, values: Grid, solution: Grid): number[] {
-  return CELL_UNITS[cell].filter((u) => UNITS[u].every((i) => values[i] === solution[i]));
+/**
+ * Unidades (fila/columna/caja) de la casilla que han quedado llenas con los 9 números sin repetir.
+ * Solo usa lo que el jugador ve en el tablero, nunca la solución, para no delatar si acertó.
+ */
+function completedUnitsAt(cell: number, values: Grid): number[] {
+  return CELL_UNITS[cell].filter((u) => new Set(UNITS[u].map((i) => values[i]).filter(Boolean)).size === 9);
 }
 
 function snapshot(s: GameState) {
@@ -86,9 +90,8 @@ function place(s: GameState, cell: number, digit: number): GameState {
   const notes = s.notes.slice();
   values[cell] = digit;
   notes[cell] = 0;
-  const correct = s.solution[cell] === digit;
-  // Al acertar se quitan automáticamente las notas de ese número en fila, columna y caja.
-  if (correct) for (const p of PEERS[cell]) notes[p] &= ~(1 << (digit - 1));
+  // Al poner un número se quitan las notas de ese número en su fila, columna y caja.
+  for (const p of PEERS[cell]) notes[p] &= ~(1 << (digit - 1));
   const solved = isSolved(values, s.solution);
   return {
     ...s,
@@ -96,11 +99,9 @@ function place(s: GameState, cell: number, digit: number): GameState {
     values,
     notes,
     hints: s.hints.filter((h) => h !== cell),
-    mistakes: s.mistakes + (correct ? 0 : 1),
+    mistakes: s.mistakes + (s.solution[cell] === digit ? 0 : 1),
     completed: solved,
-    event: solved
-      ? ev({ kind: 'win' })
-      : ev({ kind: 'place', cell, correct, completedUnits: correct ? completedUnitsAt(cell, values, s.solution) : [] }),
+    event: solved ? ev({ kind: 'win' }) : ev({ kind: 'place', cell, completedUnits: completedUnitsAt(cell, values) }),
   };
 }
 
@@ -156,14 +157,20 @@ export function gameReducer(s: GameState, a: GameAction): GameState {
       return { ...s, ...prev, history: s.history.slice(0, -1), event: ev({ kind: 'undo' }) };
     }
     case 'hint': {
+      // La pista es la única forma de saber si un número va en una casilla:
+      // casilla vacía → se rellena; número del jugador → se comprueba (y se corrige si está mal).
       let cell = s.selected;
-      const needsHelp = (i: number) => s.values[i] !== s.solution[i];
-      if (cell === null || !needsHelp(cell)) {
-        // Elige la casilla vacía más fácil: la que tiene menos posibilidades.
+      const isUserCell = (i: number) => !s.puzzle[i] && !s.hints.includes(i);
+      if (cell === null || !isUserCell(cell)) {
+        // Sin casilla válida elegida: la vacía más fácil (la que tiene menos posibilidades).
+        // Si el tablero está lleno, una de las equivocadas.
+        const pool = s.values.some((v) => !v)
+          ? (i: number) => !s.values[i]
+          : (i: number) => s.values[i] !== s.solution[i];
         let best = -1;
         let bestN = 10;
         for (let i = 0; i < 81; i++) {
-          if (!needsHelp(i)) continue;
+          if (!pool(i)) continue;
           const n = 9 - new Set(PEERS[i].map((p) => s.values[p]).filter(Boolean)).size;
           if (n < bestN) {
             best = i;
@@ -174,22 +181,35 @@ export function gameReducer(s: GameState, a: GameAction): GameState {
         cell = best;
       }
       const digit = s.solution[cell];
+      const previous = s.values[cell];
+      const mode = !previous ? 'fill' : previous === digit ? 'confirm' : 'fix';
+      if (mode === 'confirm') {
+        return {
+          ...s,
+          selected: cell,
+          history: withHistory(s),
+          hints: [...s.hints, cell],
+          hintsUsed: s.hintsUsed + 1,
+          event: ev({ kind: 'hint', cell, digit, mode, previous, completedUnits: [] }),
+        };
+      }
       const next = place({ ...s, selected: cell }, cell, digit);
-      const completedUnits = completedUnitsAt(cell, next.values, s.solution);
       return {
         ...next,
         mistakes: s.mistakes,
         hints: [...next.hints, cell],
         hintsUsed: s.hintsUsed + 1,
-        event: next.completed ? next.event : ev({ kind: 'hint', cell, digit, completedUnits }),
+        event: next.completed
+          ? next.event
+          : ev({ kind: 'hint', cell, digit, mode, previous, completedUnits: completedUnitsAt(cell, next.values) }),
       };
     }
   }
 }
 
-/** Cuántas veces está colocado cada número (índice 1..9); con `solution`, solo los correctos. */
-export function digitCounts(values: Grid, solution: Grid | null): number[] {
+/** Cuántas veces está puesto cada número en el tablero (índice 1..9), acertado o no. */
+export function digitCounts(values: Grid): number[] {
   const counts = new Array(10).fill(0);
-  for (let i = 0; i < 81; i++) if (values[i] && (!solution || values[i] === solution[i])) counts[values[i]]++;
+  for (let i = 0; i < 81; i++) if (values[i]) counts[values[i]]++;
   return counts;
 }

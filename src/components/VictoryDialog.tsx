@@ -9,12 +9,11 @@ interface Props {
   open: boolean;
   game: GameState;
   isRecord: boolean;
-  showErrors: boolean;
   onAgain: () => void;
   onHome: () => void;
 }
 
-export function VictoryDialog({ open, game, isRecord, showErrors, onAgain, onHome }: Props) {
+export function VictoryDialog({ open, game, isRecord, onAgain, onHome }: Props) {
   const level = LEVELS[game.difficulty];
   return (
     <Modal open={open} title="¡Sudoku completado!" onClose={onHome} wide hideClose dismissable={false}>
@@ -35,7 +34,7 @@ export function VictoryDialog({ open, game, isRecord, showErrors, onAgain, onHom
               acknowledgeRemotionLicense
             />
           </div>
-          <div className="victory-stats" style={{ gridTemplateColumns: `repeat(${showErrors ? 3 : 2}, 1fr)` }}>
+          <div className="victory-stats">
             <div>
               <span>Tiempo</span>
               <strong>{formatTimeWords(game.elapsedMs)}</strong>
@@ -45,12 +44,6 @@ export function VictoryDialog({ open, game, isRecord, showErrors, onAgain, onHom
               <span>Pistas usadas</span>
               <strong>{game.hintsUsed}</strong>
             </div>
-            {showErrors && (
-              <div>
-                <span>Errores</span>
-                <strong>{game.mistakes}</strong>
-              </div>
-            )}
           </div>
           <div className="sheet-actions">
             <button type="button" className="btn btn-lg" onClick={onHome}>
