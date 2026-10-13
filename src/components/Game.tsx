@@ -45,7 +45,8 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
   const toFill = game.puzzle.filter((v) => !v).length;
   const progress = toFill ? 1 - remaining / toFill : 1;
   const almost = remaining > 0 && remaining <= 5;
-  const left = hintsLeft(game);
+  const unlimited = settings.unlimitedHints;
+  const left = hintsLeft(game, unlimited);
   const fullButWrong = !game.completed && game.values.every(Boolean);
   const level = LEVELS[game.difficulty];
 
@@ -89,7 +90,10 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
     } else if (e.kind === 'undo') {
       m = { tone: 'neutral', text: 'Se ha deshecho el último paso.' };
     } else if (e.kind === 'no-hints') {
-      m = { tone: 'bad', text: `Ya ha usado las ${HINT_LIMIT[game.difficulty]} pistas de esta partida. ¡Ánimo, usted puede!` };
+      m = {
+        tone: 'bad',
+        text: `Ya ha usado las ${HINT_LIMIT[game.difficulty]} pistas de esta partida. ¡Ánimo, usted puede! (En «Ajustes» puede quitar el límite).`,
+      };
     } else if (e.kind === 'need-cell') {
       m = { tone: 'info', text: 'Primero toque una casilla vacía del tablero y después el número.' };
     } else if (e.kind === 'erase') {
@@ -208,12 +212,12 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
             <button
               type="button"
               className={`action${left === 0 ? ' spent' : ''}`}
-              onClick={() => dispatch({ type: 'hint' })}
-              aria-label={left === 0 ? 'Pista: no quedan pistas' : `Pista: quedan ${left}`}
+              onClick={() => dispatch({ type: 'hint', unlimited })}
+              aria-label={unlimited ? 'Pista: sin límite' : left === 0 ? 'Pista: no quedan pistas' : `Pista: quedan ${left}`}
             >
               <IconBulb />
               Pista
-              <span className="state hint-count">{left === 0 ? 'NINGUNA' : `QUEDAN ${left}`}</span>
+              <span className="state hint-count">{unlimited ? 'SIN LÍMITE' : left === 0 ? 'NINGUNA' : `QUEDAN ${left}`}</span>
             </button>
           </div>
           <div className={`helper tone-${msg.tone}`} role="status" aria-live="polite">

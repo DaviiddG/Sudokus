@@ -89,6 +89,13 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
       </div>
       <div className="setting">
         <div className="label">
+          <strong>Pistas sin límite</strong>
+          <span>Use «Pista» todas las veces que quiera. Si lo deja en NO, cada partida tiene unas pocas.</span>
+        </div>
+        <Switch label="Pistas sin límite" checked={settings.unlimitedHints} onChange={(v) => set('unlimitedHints', v)} />
+      </div>
+      <div className="setting">
+        <div className="label">
           <strong>Mostrar el reloj</strong>
           <span>Quítelo si prefiere jugar sin mirar el tiempo.</span>
         </div>

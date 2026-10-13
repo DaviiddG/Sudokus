@@ -63,4 +63,17 @@ describe('el juego no delata si un número es correcto', () => {
     expect(g.event).toMatchObject({ kind: 'no-hints' });
     expect(g.values).toBe(before);
   });
+
+  it('con «Pistas sin límite» la pista sigue funcionando pasado el límite', () => {
+    let g = newGame('dificil');
+    for (let k = 0; k < HINT_LIMIT.dificil + 2; k++) {
+      g = gameReducer(g, { type: 'select', cell: null });
+      g = gameReducer(g, { type: 'hint', unlimited: true });
+      expect(g.event).toMatchObject({ kind: 'hint' });
+    }
+    expect(g.hintsUsed).toBe(HINT_LIMIT.dificil + 2);
+    expect(hintsLeft(g, true)).toBe(Infinity);
+    // Si se vuelve a poner el límite, ya no quedan.
+    expect(gameReducer(g, { type: 'hint' }).event).toMatchObject({ kind: 'no-hints' });
+  });
 });

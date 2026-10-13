@@ -1211,6 +1211,18 @@ dialog.modal[open] .sheet {
   }
 }
 
+/* Móviles muy estrechos con letra grande: que los cuatro botones quepan sin desbordar. */
+@media (max-width: 360px) {
+  .actions {
+    gap: 6px;
+  }
+  .action .state.hint-count {
+    font-size: 0.66rem;
+    letter-spacing: 0;
+    padding: 2px 5px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1276,6 +1288,11 @@ dialog.modal[open] .sheet {
 }
 .action .state.hint-count {
   display: inline-block;
+  max-width: 100%;
+  text-align: center;
+  line-height: 1.25;
+  padding: 2px 8px;
+  border-radius: 12px;
 }
 @keyframes shimmer {
   to {

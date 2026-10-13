@@ -9,6 +9,8 @@ export interface Settings {
   highlightSame: boolean;
   showTimer: boolean;
   sound: boolean;
+  /** La Pista se puede usar sin límite en cada partida. */
+  unlimitedHints: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -17,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   highlightSame: true,
   showTimer: true,
   sound: true,
+  unlimitedHints: false,
 };
 
 export interface SavedGame {

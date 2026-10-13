@@ -159,6 +159,7 @@ export default function App() {
           onNew={requestNew}
           onTutorial={() => setShowTutorial(true)}
           onSettings={() => setShowSettings(true)}
+          unlimitedHints={settings.unlimitedHints}
         />
       )}
       {screen === 'loading' && (
@@ -187,6 +188,7 @@ export default function App() {
           open={showVictory}
           game={game}
           isRecord={isRecord}
+          unlimitedHints={settings.unlimitedHints}
           onAgain={() => start(game.difficulty)}
           onHome={() => {
             setShowVictory(false);

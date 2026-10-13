@@ -11,10 +11,14 @@ interface Props {
   isRecord: boolean;
   onAgain: () => void;
   onHome: () => void;
+  unlimitedHints: boolean;
 }
 
-export function VictoryDialog({ open, game, isRecord, onAgain, onHome }: Props) {
+export function VictoryDialog({ open, game, isRecord, onAgain, onHome, unlimitedHints }: Props) {
   const level = LEVELS[game.difficulty];
+  const limit = HINT_LIMIT[game.difficulty];
+  // «X de N» solo tiene sentido con límite (y si no se pasó de él con el ajuste activado a mitad de partida).
+  const showLimit = !unlimitedHints && game.hintsUsed <= limit;
   return (
     <Modal open={open} title="¡Sudoku completado!" onClose={onHome} wide hideClose dismissable={false}>
       {open && (
@@ -43,7 +47,7 @@ export function VictoryDialog({ open, game, isRecord, onAgain, onHome }: Props) 
             <div>
               <span>Pistas usadas</span>
               <strong>
-                {game.hintsUsed} de {HINT_LIMIT[game.difficulty]}
+                {showLimit ? `${game.hintsUsed} de ${limit}` : game.hintsUsed}
               </strong>
             </div>
           </div>

@@ -13,9 +13,10 @@ interface Props {
   onNew: (d: Difficulty) => void;
   onTutorial: () => void;
   onSettings: () => void;
+  unlimitedHints: boolean;
 }
 
-export function Home({ saved, stats, onContinue, onNew, onTutorial, onSettings }: Props) {
+export function Home({ saved, stats, onContinue, onNew, onTutorial, onSettings, unlimitedHints }: Props) {
   const resumable = saved && !saved.completed ? saved : null;
   const progress = resumable
     ? (() => {
@@ -100,7 +101,7 @@ export function Home({ saved, stats, onContinue, onNew, onTutorial, onSettings }
               </span>
               <span className="level-name">{L.name}</span>
               <span className="level-desc">
-                {L.desc} Tiene {HINT_LIMIT[d]} pistas.
+                {L.desc} {unlimitedHints ? 'Pistas sin límite.' : `Tiene ${HINT_LIMIT[d]} pistas.`}
               </span>
               <span className="level-meta">
                 {st.won
