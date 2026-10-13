@@ -29,7 +29,7 @@ export function Home({ saved, stats, onContinue, onNew, onTutorial, onSettings }
       <section className="home-hero">
         <div>
           <h1>
-            Sudoku <em>Sereno</em>
+            Mi <em>Sudoku</em>
           </h1>
           <p className="lead">Números grandes, colores claros y ayudas siempre a mano. Juegue a su ritmo.</p>
           <div className="hero-actions">

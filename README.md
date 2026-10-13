@@ -1,10 +1,10 @@
-# Sudoku Sereno
+# Mi Sudoku
 
 Sudoku web pensado para personas mayores: números grandes, ayudas claras, sin prisas.
 
 - `npm install` y `npm run dev` para desarrollar.
 - `npm test` comprueba que el generador crea sudokus válidos con una sola solución en las 4 dificultades.
-- `npm run build` genera `dist/index.html` (un único archivo). `npm run artifact` además crea `dist/sudoku-sereno.html` para publicarlo.
+- `npm run build` genera `dist/index.html` (un único archivo). `npm run artifact` además crea `dist/mi-sudoku.html` para publicarlo.
 
 ## Publicar en Vercel
 
