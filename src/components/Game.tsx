@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch } from 'react';
-import { digitCounts, type GameAction, type GameState } from '../state/game';
+import { HINT_LIMIT, digitCounts, hintsLeft, type GameAction, type GameState } from '../state/game';
+import { AlmostDoneOverlay } from './AlmostDoneOverlay';
 import type { Settings } from '../state/storage';
 import { LEVELS, formatTime, positionLabel } from '../labels';
 import { Board } from './Board';
@@ -38,14 +39,14 @@ const UNIT_NAMES = ['fila', 'columna', 'cuadro'];
 
 export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings, paused }: Props) {
   const [flash, setFlash] = useState<Message | null>(null);
-  // Sin avisos de error, los contadores no deben delatar los números equivocados.
-  const counts = useMemo(
-    () => digitCounts(game.values, settings.showErrors ? game.solution : null),
-    [game.values, game.solution, settings.showErrors],
-  );
-  const remaining = settings.showErrors
-    ? game.values.reduce((n, v, i) => n + (v === game.solution[i] ? 0 : 1), 0)
-    : game.values.filter((v) => !v).length;
+  // Los contadores solo miran lo que hay en el tablero: nunca delatan si un número es correcto.
+  const counts = useMemo(() => digitCounts(game.values), [game.values]);
+  const remaining = game.values.filter((v) => !v).length;
+  const toFill = game.puzzle.filter((v) => !v).length;
+  const progress = toFill ? 1 - remaining / toFill : 1;
+  const almost = remaining > 0 && remaining <= 5;
+  const unlimited = settings.unlimitedHints;
+  const left = hintsLeft(game, unlimited);
   const fullButWrong = !game.completed && game.values.every(Boolean);
   const level = LEVELS[game.difficulty];
 
@@ -70,26 +71,36 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
     lastEvent.current = e.id;
     let m: Message | null = null;
     if (e.kind === 'place') {
-      if (!e.correct && settings.showErrors) m = { tone: 'bad', text: 'Ese número no va ahí. Puede borrarlo o pulsar «Deshacer».' };
-      else if (e.completedUnits.length) {
+      if (e.completedUnits.length) {
         const names = e.completedUnits.map((u) => UNIT_NAMES[Math.floor(u / 9)]);
-        m = { tone: 'good', text: `¡Muy bien! Ha completado ${names.length > 1 ? 'una ' + names.join(' y una ') : 'una ' + names[0]}.` };
-      } else if (e.correct && settings.showErrors) m = { tone: 'good', text: '¡Correcto!' };
+        m = { tone: 'neutral', text: `Ha llenado ${names.length > 1 ? 'una ' + names.join(' y una ') : 'una ' + names[0]} sin repetir números.` };
+      }
     } else if (e.kind === 'hint') {
-      m = { tone: 'info', text: `Pista: en la ${positionLabel(e.cell)} va el ${e.digit}.` };
+      const where = positionLabel(e.cell);
+      m =
+        e.mode === 'confirm'
+          ? { tone: 'info', text: `Pista: el ${e.digit} de la ${where} es correcto.` }
+          : e.mode === 'fix'
+            ? { tone: 'info', text: `Pista: en la ${where} no iba el ${e.previous}; va el ${e.digit}.` }
+            : { tone: 'info', text: `Pista: en la ${where} va el ${e.digit}.` };
     } else if (e.kind === 'given') {
       m = { tone: 'info', text: 'Este número viene puesto desde el principio y no se puede cambiar.' };
     } else if (e.kind === 'nothing-to-undo') {
       m = { tone: 'info', text: 'No hay nada que deshacer todavía.' };
     } else if (e.kind === 'undo') {
       m = { tone: 'neutral', text: 'Se ha deshecho el último paso.' };
+    } else if (e.kind === 'no-hints') {
+      m = {
+        tone: 'bad',
+        text: `Ya ha usado las ${HINT_LIMIT[game.difficulty]} pistas de esta partida. ¡Ánimo, usted puede! (En «Ajustes» puede quitar el límite).`,
+      };
     } else if (e.kind === 'need-cell') {
       m = { tone: 'info', text: 'Primero toque una casilla vacía del tablero y después el número.' };
     } else if (e.kind === 'erase') {
       m = { tone: 'neutral', text: 'Casilla borrada.' };
     }
     setFlash(m);
-  }, [game.event, game.selected, game.notesMode, settings.showErrors]);
+  }, [game.event, game.selected, game.notesMode, game.difficulty]);
 
   const sel = game.selected;
   const guide: Message =
@@ -100,7 +111,9 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
         : game.notesMode
           ? { tone: 'info', text: 'Modo notas: toque números para apuntarlos en pequeño. Toque otra vez para quitarlos.' }
           : game.values[sel]
-            ? { tone: 'neutral', text: 'Puede cambiar el número tocando otro, o quitarlo con «Borrar».' }
+            ? game.hints.includes(sel)
+              ? { tone: 'neutral', text: 'Este número está comprobado con una pista.' }
+              : { tone: 'neutral', text: 'Puede cambiarlo, quitarlo con «Borrar» o pulsar «Pista» para saber si es correcto.' }
             : { tone: 'neutral', text: 'Ahora toque el número que quiere poner.' };
   const msg: Message =
     flash ??
@@ -140,7 +153,7 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
 
       <main className="game-main">
         <div className="board-wrap">
-          <div className="status-row">
+          <div className={`status-row${almost ? ' almost' : ''}`}>
             <span className="chip">
               {settings.showTimer && (
                 <>
@@ -149,11 +162,17 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
                 </>
               )}
             </span>
-            <span className="chip">
-              {remaining === 0 ? 'Completo' : `Faltan ${remaining} ${remaining === 1 ? 'casilla' : 'casillas'}`}
+            <span className="chip chip-left">
+              {remaining === 0 ? 'Tablero lleno' : `Faltan ${remaining} ${remaining === 1 ? 'casilla' : 'casillas'}`}
             </span>
           </div>
-          <Board game={game} settings={settings} onSelect={(cell) => dispatch({ type: 'select', cell })} />
+          <div className={`fill-bar${almost ? ' almost' : ''}`} aria-hidden="true">
+            <i style={{ width: `${progress * 100}%` }} />
+          </div>
+          <div className="board-stack">
+            <Board game={game} settings={settings} almost={almost} onSelect={(cell) => dispatch({ type: 'select', cell })} />
+            <AlmostDoneOverlay puzzleKey={game.puzzle.join('')} remaining={remaining} progress={progress} sound={settings.sound} />
+          </div>
         </div>
 
         <div className={`controls${game.notesMode ? ' notes-on' : ''}`}>
@@ -190,9 +209,15 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
               Notas
               <span className="state">{game.notesMode ? 'SÍ' : 'NO'}</span>
             </button>
-            <button type="button" className="action" onClick={() => dispatch({ type: 'hint' })}>
+            <button
+              type="button"
+              className={`action${left === 0 ? ' spent' : ''}`}
+              onClick={() => dispatch({ type: 'hint', unlimited })}
+              aria-label={unlimited ? 'Pista: sin límite' : left === 0 ? 'Pista: no quedan pistas' : `Pista: quedan ${left}`}
+            >
               <IconBulb />
               Pista
+              <span className="state hint-count">{unlimited ? 'SIN LÍMITE' : left === 0 ? 'NINGUNA' : `QUEDAN ${left}`}</span>
             </button>
           </div>
           <div className={`helper tone-${msg.tone}`} role="status" aria-live="polite">

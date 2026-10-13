@@ -1,6 +1,6 @@
 import { Player } from '@remotion/player';
 import { LEVELS, formatTimeWords } from '../labels';
-import type { GameState } from '../state/game';
+import { HINT_LIMIT, type GameState } from '../state/game';
 import { VICTORY_FPS, VICTORY_FRAMES, VICTORY_H, VICTORY_W, Victory } from '../remotion/Victory';
 import { IconHome, IconPlus } from './Icons';
 import { Modal } from './Modal';
@@ -9,13 +9,16 @@ interface Props {
   open: boolean;
   game: GameState;
   isRecord: boolean;
-  showErrors: boolean;
   onAgain: () => void;
   onHome: () => void;
+  unlimitedHints: boolean;
 }
 
-export function VictoryDialog({ open, game, isRecord, showErrors, onAgain, onHome }: Props) {
+export function VictoryDialog({ open, game, isRecord, onAgain, onHome, unlimitedHints }: Props) {
   const level = LEVELS[game.difficulty];
+  const limit = HINT_LIMIT[game.difficulty];
+  // «X de N» solo tiene sentido con límite (y si no se pasó de él con el ajuste activado a mitad de partida).
+  const showLimit = !unlimitedHints && game.hintsUsed <= limit;
   return (
     <Modal open={open} title="¡Sudoku completado!" onClose={onHome} wide hideClose dismissable={false}>
       {open && (
@@ -35,7 +38,7 @@ export function VictoryDialog({ open, game, isRecord, showErrors, onAgain, onHom
               acknowledgeRemotionLicense
             />
           </div>
-          <div className="victory-stats" style={{ gridTemplateColumns: `repeat(${showErrors ? 3 : 2}, 1fr)` }}>
+          <div className="victory-stats">
             <div>
               <span>Tiempo</span>
               <strong>{formatTimeWords(game.elapsedMs)}</strong>
@@ -43,14 +46,10 @@ export function VictoryDialog({ open, game, isRecord, showErrors, onAgain, onHom
             </div>
             <div>
               <span>Pistas usadas</span>
-              <strong>{game.hintsUsed}</strong>
+              <strong>
+                {showLimit ? `${game.hintsUsed} de ${limit}` : game.hintsUsed}
+              </strong>
             </div>
-            {showErrors && (
-              <div>
-                <span>Errores</span>
-                <strong>{game.mistakes}</strong>
-              </div>
-            )}
           </div>
           <div className="sheet-actions">
             <button type="button" className="btn btn-lg" onClick={onHome}>

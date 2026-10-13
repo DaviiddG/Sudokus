@@ -2,6 +2,7 @@ import { Player } from '@remotion/player';
 import { DIFFICULTIES, type Difficulty } from '../sudoku/engine';
 import { LEVELS, formatTime } from '../labels';
 import type { SavedGame, Stats } from '../state/storage';
+import { HINT_LIMIT } from '../state/game';
 import { HERO_FPS, HERO_FRAMES, HERO_SIZE, HeroLoop } from '../remotion/HeroLoop';
 import { IconPlay, IconQuestion, IconSettings } from './Icons';
 
@@ -12,15 +13,16 @@ interface Props {
   onNew: (d: Difficulty) => void;
   onTutorial: () => void;
   onSettings: () => void;
+  unlimitedHints: boolean;
 }
 
-export function Home({ saved, stats, onContinue, onNew, onTutorial, onSettings }: Props) {
+export function Home({ saved, stats, onContinue, onNew, onTutorial, onSettings, unlimitedHints }: Props) {
   const resumable = saved && !saved.completed ? saved : null;
   const progress = resumable
     ? (() => {
         const empty = resumable.puzzle.filter((v) => !v).length;
-        const ok = resumable.values.filter((v, i) => !resumable.puzzle[i] && v === resumable.solution[i]).length;
-        return empty ? ok / empty : 0;
+        const filled = resumable.values.filter((v, i) => v && !resumable.puzzle[i]).length;
+        return empty ? filled / empty : 0;
       })()
     : 0;
 
@@ -29,7 +31,7 @@ export function Home({ saved, stats, onContinue, onNew, onTutorial, onSettings }
       <section className="home-hero">
         <div>
           <h1>
-            Sudoku <em>Sereno</em>
+            Mi <em>Sudoku</em>
           </h1>
           <p className="lead">Números grandes, colores claros y ayudas siempre a mano. Juegue a su ritmo.</p>
           <div className="hero-actions">
@@ -98,7 +100,9 @@ export function Home({ saved, stats, onContinue, onNew, onTutorial, onSettings }
                 ))}
               </span>
               <span className="level-name">{L.name}</span>
-              <span className="level-desc">{L.desc}</span>
+              <span className="level-desc">
+                {L.desc} {unlimitedHints ? 'Pistas sin límite.' : `Tiene ${HINT_LIMIT[d]} pistas.`}
+              </span>
               <span className="level-meta">
                 {st.won
                   ? `Completados: ${st.won}${st.bestMs ? ` · Mejor tiempo: ${formatTime(st.bestMs)}` : ''}`

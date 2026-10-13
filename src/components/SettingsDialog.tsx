@@ -82,17 +82,17 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
       </div>
       <div className="setting">
         <div className="label">
-          <strong>Avisar de errores</strong>
-          <span>Los números equivocados se marcan en rojo.</span>
-        </div>
-        <Switch label="Avisar de errores" checked={settings.showErrors} onChange={(v) => set('showErrors', v)} />
-      </div>
-      <div className="setting">
-        <div className="label">
           <strong>Resaltar números iguales</strong>
           <span>Al tocar un 5 se iluminan todos los 5.</span>
         </div>
         <Switch label="Resaltar números iguales" checked={settings.highlightSame} onChange={(v) => set('highlightSame', v)} />
+      </div>
+      <div className="setting">
+        <div className="label">
+          <strong>Pistas sin límite</strong>
+          <span>Use «Pista» todas las veces que quiera. Si lo deja en NO, cada partida tiene unas pocas.</span>
+        </div>
+        <Switch label="Pistas sin límite" checked={settings.unlimitedHints} onChange={(v) => set('unlimitedHints', v)} />
       </div>
       <div className="setting">
         <div className="label">

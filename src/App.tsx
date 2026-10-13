@@ -59,13 +59,9 @@ export default function App() {
     lastEvent.current = e.id;
     const play = settings.sound;
     if (e.kind === 'place') {
-      if (play) {
-        if (!e.correct && settings.showErrors) sounds.wrong();
-        else if (e.completedUnits.length) sounds.unit();
-        else sounds.correct();
-      }
+      if (play) (e.completedUnits.length ? sounds.unit : sounds.place)();
     } else if (e.kind === 'hint') {
-      if (play) (e.completedUnits.length ? sounds.unit : sounds.correct)();
+      if (play) (e.completedUnits.length ? sounds.unit : sounds.place)();
     } else if (e.kind === 'win') {
       if (play) sounds.win();
       const prev = stats[game.difficulty];
@@ -82,7 +78,7 @@ export default function App() {
         if (screenRef.current === 'game') setShowVictory(true);
       }, 900);
     }
-  }, [game, settings.sound, settings.showErrors, stats]);
+  }, [game, settings.sound, stats]);
 
   const start = useCallback((d: Difficulty) => {
     setConfirmLevel(null);
@@ -163,6 +159,7 @@ export default function App() {
           onNew={requestNew}
           onTutorial={() => setShowTutorial(true)}
           onSettings={() => setShowSettings(true)}
+          unlimitedHints={settings.unlimitedHints}
         />
       )}
       {screen === 'loading' && (
@@ -191,7 +188,7 @@ export default function App() {
           open={showVictory}
           game={game}
           isRecord={isRecord}
-          showErrors={settings.showErrors}
+          unlimitedHints={settings.unlimitedHints}
           onAgain={() => start(game.difficulty)}
           onHome={() => {
             setShowVictory(false);

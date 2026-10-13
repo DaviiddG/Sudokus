@@ -10,5 +10,5 @@ const keep = head
   .replace(/<meta name="viewport"[^>]*>/i, '');
 const titleMatch = keep.match(/<title>[\s\S]*?<\/title>/);
 const rest = keep.replace(titleMatch[0], '');
-writeFileSync('dist/sudoku-sereno.html', `${titleMatch[0]}\n${rest.trim()}\n${body.trim()}\n`);
-console.log('dist/sudoku-sereno.html listo');
+writeFileSync('dist/mi-sudoku.html', `${titleMatch[0]}\n${rest.trim()}\n${body.trim()}\n`);
+console.log('dist/mi-sudoku.html listo');
