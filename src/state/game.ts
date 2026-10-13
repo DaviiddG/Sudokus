@@ -18,6 +18,7 @@ export type GameEvent =
   | { id: number; kind: 'nothing-to-undo' }
   | { id: number; kind: 'given'; cell: number }
   | { id: number; kind: 'need-cell' }
+  | { id: number; kind: 'no-hints' }
   | { id: number; kind: 'win' };
 
 export type GameAction =
@@ -29,6 +30,12 @@ export type GameAction =
   | { type: 'toggle-notes' }
   | { type: 'hint' }
   | { type: 'tick'; ms: number };
+
+/** Pistas disponibles en cada partida según la dificultad. */
+export const HINT_LIMIT: Record<Difficulty, number> = { 'muy-facil': 5, facil: 4, medio: 3, dificil: 3 };
+
+export const hintsLeft = (s: Pick<GameState, 'difficulty' | 'hintsUsed'>) =>
+  Math.max(0, HINT_LIMIT[s.difficulty] - s.hintsUsed);
 
 let eventId = 0;
 const ev = <T extends Omit<GameEvent, 'id'>>(e: T) => ({ ...e, id: ++eventId }) as GameEvent;
@@ -159,6 +166,7 @@ export function gameReducer(s: GameState, a: GameAction): GameState {
     case 'hint': {
       // La pista es la única forma de saber si un número va en una casilla:
       // casilla vacía → se rellena; número del jugador → se comprueba (y se corrige si está mal).
+      if (hintsLeft(s) === 0) return { ...s, event: ev({ kind: 'no-hints' }) };
       let cell = s.selected;
       const isUserCell = (i: number) => !s.puzzle[i] && !s.hints.includes(i);
       if (cell === null || !isUserCell(cell)) {

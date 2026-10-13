@@ -1,6 +1,6 @@
 import { Player } from '@remotion/player';
 import { LEVELS, formatTimeWords } from '../labels';
-import type { GameState } from '../state/game';
+import { HINT_LIMIT, type GameState } from '../state/game';
 import { VICTORY_FPS, VICTORY_FRAMES, VICTORY_H, VICTORY_W, Victory } from '../remotion/Victory';
 import { IconHome, IconPlus } from './Icons';
 import { Modal } from './Modal';
@@ -42,7 +42,9 @@ export function VictoryDialog({ open, game, isRecord, onAgain, onHome }: Props) 
             </div>
             <div>
               <span>Pistas usadas</span>
-              <strong>{game.hintsUsed}</strong>
+              <strong>
+                {game.hintsUsed} de {HINT_LIMIT[game.difficulty]}
+              </strong>
             </div>
           </div>
           <div className="sheet-actions">

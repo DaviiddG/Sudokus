@@ -345,7 +345,7 @@ const HELPS = [
   { name: 'Deshacer', text: 'Vuelve atrás el último paso.', icon: 'M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11' },
   { name: 'Borrar', text: 'Quita el número de la casilla.', icon: 'M20 20H9L4.6 15.6a2 2 0 0 1 0-2.8l8.8-8.8a2 2 0 0 1 2.8 0l3.2 3.2a2 2 0 0 1 0 2.8L11 18.4M9.5 9.5l5 5' },
   { name: 'Notas', text: 'Apunte en pequeño los números posibles.', icon: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4ZM13.5 6.5l4 4' },
-  { name: 'Pista', text: 'Le dice qué número va, o si el suyo es correcto.', icon: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z' },
+  { name: 'Pista', text: 'Le dice qué número va, o si el suyo es correcto. Hay pocas por partida.', icon: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z' },
 ];
 function Helps() {
   const frame = useCurrentFrame();

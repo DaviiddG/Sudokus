@@ -2,6 +2,7 @@ import { Player } from '@remotion/player';
 import { DIFFICULTIES, type Difficulty } from '../sudoku/engine';
 import { LEVELS, formatTime } from '../labels';
 import type { SavedGame, Stats } from '../state/storage';
+import { HINT_LIMIT } from '../state/game';
 import { HERO_FPS, HERO_FRAMES, HERO_SIZE, HeroLoop } from '../remotion/HeroLoop';
 import { IconPlay, IconQuestion, IconSettings } from './Icons';
 
@@ -98,7 +99,9 @@ export function Home({ saved, stats, onContinue, onNew, onTutorial, onSettings }
                 ))}
               </span>
               <span className="level-name">{L.name}</span>
-              <span className="level-desc">{L.desc}</span>
+              <span className="level-desc">
+                {L.desc} Tiene {HINT_LIMIT[d]} pistas.
+              </span>
               <span className="level-meta">
                 {st.won
                   ? `Completados: ${st.won}${st.bestMs ? ` · Mejor tiempo: ${formatTime(st.bestMs)}` : ''}`

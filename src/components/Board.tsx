@@ -6,6 +6,8 @@ import type { Settings } from '../state/storage';
 interface Props {
   game: GameState;
   settings: Settings;
+  /** Quedan pocas casillas: las vacías laten suavemente para encontrarlas. */
+  almost: boolean;
   onSelect: (cell: number) => void;
 }
 
@@ -19,7 +21,7 @@ function describe(game: GameState, i: number) {
   return notes.length ? `${pos}: vacía, notas ${notes.join(', ')}` : `${pos}: vacía`;
 }
 
-export const Board = memo(function Board({ game, settings, onSelect }: Props) {
+export const Board = memo(function Board({ game, settings, almost, onSelect }: Props) {
   const sel = game.selected;
   const selValue = sel !== null ? game.values[sel] : 0;
   const ev = game.event;
@@ -61,6 +63,7 @@ export const Board = memo(function Board({ game, settings, onSelect }: Props) {
           isSel && 'selected',
           animate,
           k !== undefined && 'wave',
+          almost && !v && 'beckon',
         ]
           .filter(Boolean)
           .join(' ');

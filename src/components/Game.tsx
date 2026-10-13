@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch } from 'react';
-import { digitCounts, type GameAction, type GameState } from '../state/game';
+import { HINT_LIMIT, digitCounts, hintsLeft, type GameAction, type GameState } from '../state/game';
+import { AlmostDoneOverlay } from './AlmostDoneOverlay';
 import type { Settings } from '../state/storage';
 import { LEVELS, formatTime, positionLabel } from '../labels';
 import { Board } from './Board';
@@ -41,6 +42,10 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
   // Los contadores solo miran lo que hay en el tablero: nunca delatan si un número es correcto.
   const counts = useMemo(() => digitCounts(game.values), [game.values]);
   const remaining = game.values.filter((v) => !v).length;
+  const toFill = game.puzzle.filter((v) => !v).length;
+  const progress = toFill ? 1 - remaining / toFill : 1;
+  const almost = remaining > 0 && remaining <= 5;
+  const left = hintsLeft(game);
   const fullButWrong = !game.completed && game.values.every(Boolean);
   const level = LEVELS[game.difficulty];
 
@@ -67,13 +72,13 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
     if (e.kind === 'place') {
       if (e.completedUnits.length) {
         const names = e.completedUnits.map((u) => UNIT_NAMES[Math.floor(u / 9)]);
-        m = { tone: 'good', text: `Ha llenado ${names.length > 1 ? 'una ' + names.join(' y una ') : 'una ' + names[0]} sin repetir números.` };
+        m = { tone: 'neutral', text: `Ha llenado ${names.length > 1 ? 'una ' + names.join(' y una ') : 'una ' + names[0]} sin repetir números.` };
       }
     } else if (e.kind === 'hint') {
       const where = positionLabel(e.cell);
       m =
         e.mode === 'confirm'
-          ? { tone: 'good', text: `Pista: el ${e.digit} de la ${where} es correcto.` }
+          ? { tone: 'info', text: `Pista: el ${e.digit} de la ${where} es correcto.` }
           : e.mode === 'fix'
             ? { tone: 'info', text: `Pista: en la ${where} no iba el ${e.previous}; va el ${e.digit}.` }
             : { tone: 'info', text: `Pista: en la ${where} va el ${e.digit}.` };
@@ -83,13 +88,15 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
       m = { tone: 'info', text: 'No hay nada que deshacer todavía.' };
     } else if (e.kind === 'undo') {
       m = { tone: 'neutral', text: 'Se ha deshecho el último paso.' };
+    } else if (e.kind === 'no-hints') {
+      m = { tone: 'bad', text: `Ya ha usado las ${HINT_LIMIT[game.difficulty]} pistas de esta partida. ¡Ánimo, usted puede!` };
     } else if (e.kind === 'need-cell') {
       m = { tone: 'info', text: 'Primero toque una casilla vacía del tablero y después el número.' };
     } else if (e.kind === 'erase') {
       m = { tone: 'neutral', text: 'Casilla borrada.' };
     }
     setFlash(m);
-  }, [game.event, game.selected, game.notesMode]);
+  }, [game.event, game.selected, game.notesMode, game.difficulty]);
 
   const sel = game.selected;
   const guide: Message =
@@ -142,7 +149,7 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
 
       <main className="game-main">
         <div className="board-wrap">
-          <div className="status-row">
+          <div className={`status-row${almost ? ' almost' : ''}`}>
             <span className="chip">
               {settings.showTimer && (
                 <>
@@ -151,11 +158,17 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
                 </>
               )}
             </span>
-            <span className="chip">
-              {remaining === 0 ? 'Completo' : `Faltan ${remaining} ${remaining === 1 ? 'casilla' : 'casillas'}`}
+            <span className="chip chip-left">
+              {remaining === 0 ? 'Tablero lleno' : `Faltan ${remaining} ${remaining === 1 ? 'casilla' : 'casillas'}`}
             </span>
           </div>
-          <Board game={game} settings={settings} onSelect={(cell) => dispatch({ type: 'select', cell })} />
+          <div className={`fill-bar${almost ? ' almost' : ''}`} aria-hidden="true">
+            <i style={{ width: `${progress * 100}%` }} />
+          </div>
+          <div className="board-stack">
+            <Board game={game} settings={settings} almost={almost} onSelect={(cell) => dispatch({ type: 'select', cell })} />
+            <AlmostDoneOverlay puzzleKey={game.puzzle.join('')} remaining={remaining} progress={progress} sound={settings.sound} />
+          </div>
         </div>
 
         <div className={`controls${game.notesMode ? ' notes-on' : ''}`}>
@@ -192,9 +205,15 @@ export function Game({ game, settings, dispatch, onHome, onTutorial, onSettings,
               Notas
               <span className="state">{game.notesMode ? 'SÍ' : 'NO'}</span>
             </button>
-            <button type="button" className="action" onClick={() => dispatch({ type: 'hint' })}>
+            <button
+              type="button"
+              className={`action${left === 0 ? ' spent' : ''}`}
+              onClick={() => dispatch({ type: 'hint' })}
+              aria-label={left === 0 ? 'Pista: no quedan pistas' : `Pista: quedan ${left}`}
+            >
               <IconBulb />
               Pista
+              <span className="state hint-count">{left === 0 ? 'NINGUNA' : `QUEDAN ${left}`}</span>
             </button>
           </div>
           <div className={`helper tone-${msg.tone}`} role="status" aria-live="polite">

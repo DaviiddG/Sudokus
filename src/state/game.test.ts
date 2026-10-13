@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { digitCounts, gameReducer, newGame, type GameState } from './game';
+import { HINT_LIMIT, digitCounts, gameReducer, hintsLeft, newGame, type GameState } from './game';
 
 const firstEmpty = (g: GameState) => g.puzzle.findIndex((v) => !v);
 const wrongDigit = (g: GameState, i: number) => (g.solution[i] % 9) + 1;
@@ -48,5 +48,19 @@ describe('el juego no delata si un número es correcto', () => {
     g = gameReducer(g, { type: 'hint' });
     expect(g.event).toMatchObject({ kind: 'hint', mode: 'fill' });
     expect(g.values[i]).toBe(wrongDigit(g, i)); // el número equivocado sigue sin delatarse
+  });
+
+  it('las pistas se acaban al llegar al límite de la partida', () => {
+    let g = newGame('medio');
+    for (let k = 0; k < HINT_LIMIT.medio; k++) {
+      g = gameReducer(g, { type: 'select', cell: null });
+      g = gameReducer(g, { type: 'hint' });
+      expect(g.event).toMatchObject({ kind: 'hint' });
+    }
+    expect(hintsLeft(g)).toBe(0);
+    const before = g.values;
+    g = gameReducer(g, { type: 'hint' });
+    expect(g.event).toMatchObject({ kind: 'no-hints' });
+    expect(g.values).toBe(before);
   });
 });

@@ -18,7 +18,7 @@
   --cell-selected: #a9bff8;
   --digit-given: #1b2333;
   --digit-user: #2148c0;
-  --digit-hint: #13724a;
+  --digit-hint: #8a4b00;
   --error: #b3261e;
   --error-bg: #fde4e1;
   --success: #13724a;
@@ -48,7 +48,7 @@
   --cell-selected: #3f5aa8;
   --digit-given: #f3eee4;
   --digit-user: #9fb8ff;
-  --digit-hint: #6fd9a6;
+  --digit-hint: #f2b65e;
   --error: #ff8a80;
   --error-bg: #4a1f22;
   --success: #6fd9a6;
@@ -78,7 +78,7 @@
   --cell-selected: #ffc800;
   --digit-given: #000000;
   --digit-user: #0030b8;
-  --digit-hint: #00632f;
+  --digit-hint: #7a3e00;
   --error: #b00000;
   --error-bg: #ffd6d6;
   --success: #00632f;
@@ -609,8 +609,8 @@ p {
     background: var(--cell);
   }
   30% {
-    background: var(--success-soft);
-    box-shadow: inset 0 0 0 0.6cqw var(--success);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 0.6cqw var(--accent);
   }
   100% {
   }
@@ -620,8 +620,8 @@ p {
     background: var(--cell);
   }
   30% {
-    background: var(--success-soft);
-    box-shadow: inset 0 0 0 0.6cqw var(--success);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 0.6cqw var(--accent);
   }
   100% {
   }
@@ -679,15 +679,13 @@ p {
   border-color: var(--accent);
 }
 .num.done {
-  background: var(--success-soft);
+  background: var(--surface-2);
   border-color: transparent;
   box-shadow: none;
 }
-.num.done b {
-  color: var(--success);
-}
+.num.done b,
 .num.done small {
-  color: var(--success);
+  color: var(--ink-soft);
 }
 .notes-on .num b {
   font-size: 1.7rem;
@@ -1229,4 +1227,77 @@ dialog.modal[open] .sheet {
   border-radius: 50%;
   margin-right: 0.4em;
   vertical-align: 0.02em;
+}
+
+/* ───────────── Final de la partida ───────────── */
+.board-stack {
+  position: relative;
+}
+.almost-overlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 104%;
+  aspect-ratio: 800 / 420;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 5;
+}
+.fill-bar {
+  height: 10px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--line) 70%, transparent);
+  overflow: hidden;
+}
+.fill-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.5s var(--ease);
+}
+.fill-bar.almost > i {
+  background: linear-gradient(90deg, var(--warm), color-mix(in srgb, var(--warm) 55%, white), var(--warm));
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+.status-row.almost .chip-left {
+  padding: 2px 14px;
+  border-radius: 99px;
+  background: var(--warm);
+  color: #1b1405;
+  animation: nudge 1.8s ease-in-out infinite;
+}
+.cell.beckon {
+  animation: beckon 1.8s ease-in-out infinite;
+}
+.action.spent {
+  opacity: 0.55;
+}
+.action .state.hint-count {
+  display: inline-block;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes nudge {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+@keyframes beckon {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: inset 0 0 0 0.7cqw var(--warm);
+    background: color-mix(in srgb, var(--warm) 14%, var(--cell));
+  }
 }
